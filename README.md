@@ -1,2 +1,2 @@
 # NERVALYS-AI
-Hybrid Machine Learning Based System for Diabetic Peripheral Neuropathy Patient Stratification Using a Derived Personalized Linguistic Code.
+Decoding Diabetic Peripheral Neuropathy Heterogeneity: A Hybrid ML System Using a Patient-Personalized Vector for Disease Representation and Stratification
