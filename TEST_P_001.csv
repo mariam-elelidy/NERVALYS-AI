@@ -1,2 +1,0 @@
-sample_id,sex,age_years,ethnicity,clinical_status,diabetes_duration_years,dpn_duration_years,dpn_clinical_subtype,pain_score_0_10,TNF_alpha_pg_ml,MDA_umol_L,EMG_MUNE,EMG_MUI,EMG_MUAP_I,EMG_RMS_mean,EMG_median_frequency
-SM_P_0001,Male,43,African,mild,7.5,4,Small-fiber predominant DPN,7,21.55,6.25,108.98,2.57,165.448,69.35,50.459
