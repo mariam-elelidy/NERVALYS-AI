@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NERVALYS-AI — Decoding Diabetic Neuropathy</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:       #04080f;
+    --bg-mid:   #070d1a;
+    --bg-card:  #0a1428;
+    --bg-card2: #0d1a30;
+    --border:   rgba(58,100,180,0.18);
+    --border-h: rgba(58,130,230,0.38);
+
+    --blue:     #3a82f0;
+    --blue-dim: #2060c8;
+    --blue-lt:  #6aaaf7;
+    --blue-glow: rgba(58,130,240,0.10);
+
+    --steel:    #8ab4e8;
+    --steel-dim: rgba(138,180,232,0.55);
+
+    --accent:   #1e90ff;
+    --accent2:  #4fc3f7;
+
+    --white:    #e8f0fc;
+    --white-dim: rgba(220,232,252,0.65);
+    --white-muted: rgba(180,205,240,0.35);
+    --grid-line: rgba(40,80,160,0.06);
+    --text-body: rgba(185,210,245,0.78);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(130px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-orb.one { width: 700px; height: 700px; background: rgba(30,100,220,0.07); top: -220px; left: -120px; }
+  .glow-orb.two { width: 500px; height: 500px; background: rgba(58,130,240,0.05); bottom: 15%; right: -150px; }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4rem 4rem;
+    background: rgba(4,8,15,0.88);
+    backdrop-filter: blur(22px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.18rem;
+    letter-spacing: 0.1em;
+    color: var(--blue-lt);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--white-dim); font-weight: 400; }
+
+  nav ul { list-style: none; display: flex; gap: 2.5rem; }
+  nav ul li a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--white-muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  nav ul li a:hover { color: var(--blue-lt); }
+
+  .nav-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.4rem;
+    border: 1px solid var(--blue);
+    color: var(--blue-lt);
+    text-decoration: none;
+    border-radius: 3px;
+    transition: all 0.22s;
+  }
+  .nav-cta:hover { background: var(--blue); color: #fff; }
+
+  section { position: relative; z-index: 1; }
+
+  /* HERO */
+  .hero-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 9rem 4rem 5rem;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    color: var(--steel);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: fadeUp 0.7s 0.1s both;
+  }
+  .hero-eyebrow::before { content: ''; width: 36px; height: 1px; background: var(--steel); }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.9rem, 5.5vw, 5.2rem);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.6rem;
+    animation: fadeUp 0.7s 0.25s both;
+  }
+  .hero-title .hi { color: var(--blue-lt); }
+  .hero-title .h2 { color: var(--accent2); }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-body);
+    max-width: 600px;
+    margin-bottom: 3rem;
+    line-height: 1.85;
+    animation: fadeUp 0.7s 0.4s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.55s both;
+  }
+
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.88rem 2.2rem;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 3px;
+    font-weight: 700;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--accent); transform: translateY(-1px); }
+
+  .btn-ghost {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.88rem 2.2rem;
+    border: 1px solid rgba(138,180,232,0.25);
+    color: var(--white-dim);
+    text-decoration: none;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--blue-lt); color: var(--blue-lt); }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 5rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    animation: fadeUp 0.8s 0.7s both;
+  }
+
+  .hero-stat {
+    padding: 1.8rem 2rem;
+    border-right: 1px solid var(--border);
+    position: relative;
+    transition: background 0.25s;
+  }
+  .hero-stat:last-child { border-right: none; }
+  .hero-stat:hover { background: rgba(58,130,240,0.05); }
+  .hero-stat::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--blue);
+    transform: scaleX(0);
+    transition: transform 0.35s ease;
+    transform-origin: left;
+  }
+  .hero-stat:hover::after { transform: scaleX(1); }
+
+  .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2.1rem;
+    color: var(--blue-lt);
+    line-height: 1;
+    margin-bottom: 0.45rem;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--white-muted);
+    text-transform: uppercase;
+  }
+
+  /* SECTION SHARED */
+  .section-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 7rem 4rem;
+  }
+
+  .section-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .section-tag::before { content: ''; width: 22px; height: 1px; background: var(--steel); }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.9rem, 3.2vw, 2.8rem);
+    line-height: 1.15;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.015em;
+  }
+
+  .section-body {
+    font-size: 1.03rem;
+    color: var(--text-body);
+    max-width: 680px;
+    line-height: 1.85;
+  }
+
+  .section-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(58,130,240,0.18), transparent);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* VIDEO */
+  #demo { background: var(--bg-mid); }
+
+  .video-wrapper {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+    margin-top: 3rem;
+    max-width: 900px;
+  }
+
+  .video-placeholder {
+    width: 100%;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #050d1c;
+    gap: 1.2rem;
+  }
+
+  .play-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 2px solid var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: rgba(58,130,240,0.08);
+    text-decoration: none;
+    animation: pulseRing 2.6s ease 1s infinite;
+  }
+  .play-btn:hover { background: var(--blue); transform: scale(1.07); }
+  .play-btn svg { fill: var(--blue-lt); width: 26px; height: 26px; margin-left: 4px; }
+  .play-btn:hover svg { fill: #fff; }
+
+  .video-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--white-muted);
+    text-transform: uppercase;
+  }
+
+  /* OUTPUTS */
+  #outputs { background: var(--bg); }
+
+  .outputs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+    margin-top: 3.5rem;
+  }
+
+  .output-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .output-card:hover { border-color: var(--border-h); background: var(--bg-card2); }
+
+  .output-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .output-card.t-blue::after { background: var(--blue); }
+  .output-card.t-steel::after { background: var(--steel); }
+  .output-card.t-accent::after { background: var(--accent2); }
+  .output-card.t-mix::after { background: linear-gradient(90deg, var(--blue), var(--accent2)); }
+  .output-card.wide { grid-column: 1 / -1; }
+
+  .card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--blue-lt);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-label.steel { color: var(--steel); }
+  .card-label.accent2 { color: var(--accent2); }
+
+  .card-label-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* PV */
+  .pv-id {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.76rem;
+    color: var(--white-muted);
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0.8rem;
+    background: rgba(58,130,240,0.06);
+    border-radius: 3px;
+    border-left: 2px solid var(--blue);
+    display: inline-block;
+  }
+
+  .pv-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.45rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pv-metric {
+    text-align: center;
+    padding: 0.75rem 0.3rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    border: 1px solid rgba(58,130,240,0.1);
+  }
+  .pv-metric-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--blue-lt);
+    display: block;
+  }
+  .pv-metric-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.56rem;
+    color: var(--white-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.2rem;
+    display: block;
+  }
+
+  /* Strat bars */
+  .strat-badge {
+    display: inline-block;
+    padding: 0.32rem 0.75rem;
+    background: rgba(58,130,240,0.1);
+    border: 1px solid rgba(58,130,240,0.25);
+    border-radius: 2px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.73rem;
+    color: var(--blue-lt);
+    margin-bottom: 1.2rem;
+  }
+
+  .strat-row { margin-bottom: 1rem; }
+  .strat-row-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.63rem;
+    letter-spacing: 0.08em;
+    color: var(--white-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.48rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .strat-vals { font-size: 0.68rem; color: var(--steel); }
+
+  .bar-track {
+    height: 5px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .bar-fill.b1 { background: var(--blue); }
+  .bar-fill.b2 { background: var(--accent2); }
+  .bar-fill.b3 { background: linear-gradient(90deg, var(--blue), var(--accent2)); }
+
+  /* Age */
+  .age-display {
+    display: flex;
+    align-items: flex-end;
+    gap: 1.4rem;
+    margin-bottom: 1.4rem;
+  }
+  .age-big {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 3.4rem;
+    line-height: 1;
+    color: var(--accent2);
+  }
+  .age-big span { font-size: 1.1rem; font-weight: 400; color: var(--white-muted); }
+  .age-line {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--white-muted);
+    margin-bottom: 0.3rem;
+  }
+  .age-delta {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--accent2);
+  }
+  .age-interp {
+    font-size: 0.82rem;
+    color: var(--text-body);
+    padding: 0.6rem 0.8rem;
+    background: rgba(79,195,247,0.06);
+    border-left: 2px solid rgba(79,195,247,0.4);
+    border-radius: 0 3px 3px 0;
+  }
+
+  /* MRW */
+  .mrw-big {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 3rem;
+    color: var(--accent2);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .mrw-big span { font-size: 1rem; font-weight: 400; color: var(--white-muted); }
+  .mrw-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.52rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.82rem;
+  }
+  .mrw-row-key { color: var(--white-muted); }
+  .mrw-row-val { font-family: 'Space Mono', monospace; font-size: 0.76rem; color: var(--blue-lt); }
+  .mrw-warning {
+    margin-top: 1rem;
+    padding: 0.65rem;
+    background: rgba(58,130,240,0.07);
+    border: 1px solid rgba(58,130,240,0.2);
+    border-radius: 3px;
+    font-size: 0.78rem;
+    color: var(--steel);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Prognosis */
+  .risk-score-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--blue-lt);
+    line-height: 1;
+  }
+  .risk-badge {
+    padding: 0.28rem 0.75rem;
+    background: rgba(58,130,240,0.13);
+    border: 1px solid rgba(58,130,240,0.3);
+    border-radius: 2px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--blue-lt);
+    text-transform: uppercase;
+  }
+  .prog-risk { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.4rem; }
+  .prog-timeline { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; margin-bottom: 1rem; }
+  .prog-phase {
+    padding: 0.75rem;
+    background: rgba(0,0,0,0.22);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .prog-phase-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--white-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.28rem;
+  }
+  .prog-phase-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--blue-lt);
+  }
+  .ci-row {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--white-muted);
+  }
+  .ci-val { color: var(--blue-lt); }
+
+  /* PFI */
+  .pfi-score {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 3rem;
+    color: var(--blue-lt);
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+  .pfi-badge {
+    display: inline-block;
+    padding: 0.22rem 0.65rem;
+    background: rgba(58,130,240,0.1);
+    border: 1px solid rgba(58,130,240,0.22);
+    border-radius: 2px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--blue-lt);
+    text-transform: uppercase;
+    margin-bottom: 1.1rem;
+  }
+  .pfi-track-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--white-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.38rem;
+    margin-top: 0.75rem;
+  }
+  .pfi-scale {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--white-muted);
+  }
+  .pfi-scale-bar {
+    flex: 1; height: 7px;
+    background: linear-gradient(90deg, rgba(58,130,240,0.25), var(--blue) 73%, var(--accent2));
+    border-radius: 3px;
+    position: relative;
+  }
+  .pfi-scale-marker {
+    position: absolute; top: -4px; left: 73%;
+    width: 2px; height: 15px;
+    background: var(--white); border-radius: 1px;
+  }
+
+  /* Interaction map */
+  .imap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    margin-top: 1.1rem;
+  }
+  .imap-table th {
+    color: var(--white-muted);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.48rem 0.65rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .imap-table th:first-child { text-align: left; }
+  .imap-table td {
+    padding: 0.48rem 0.65rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--white-dim);
+    font-size: 0.7rem;
+  }
+  .imap-table td:first-child { text-align: left; color: var(--white-muted); }
+
+  .imap-cell {
+    display: inline-block;
+    padding: 0.16rem 0.38rem;
+    border-radius: 2px;
+    font-size: 0.68rem;
+  }
+  .heat-high { background: rgba(58,130,240,0.22); color: var(--blue-lt); }
+  .heat-mid  { background: rgba(58,130,240,0.1);  color: rgba(138,180,232,0.9); }
+  .heat-low  { background: rgba(255,255,255,0.05); color: var(--white-muted); }
+
+  .path-line {
+    display: flex; align-items: center; gap: 0.45rem;
+    font-family: 'Space Mono', monospace; font-size: 0.7rem;
+    color: var(--text-body);
+    margin-bottom: 0.5rem;
+  }
+  .path-arrow { color: var(--blue-lt); }
+  .path-val   { color: var(--blue-lt); margin-left: auto; }
+  .path-cross { color: var(--steel); }
+  .path-val-supp { color: var(--steel); margin-left: auto; }
+  .path-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.62rem; color: var(--white-muted);
+    text-transform: uppercase; margin-bottom: 0.5rem;
+    letter-spacing: 0.08em;
+  }
+
+  /* HOW */
+  #how { background: var(--bg-mid); }
+
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 0;
+    margin-top: 3.5rem;
+    position: relative;
+  }
+  .pipeline::before {
+    content: '';
+    position: absolute;
+    top: 3.1rem; left: 12%; right: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--blue), var(--accent2));
+    z-index: 0;
+  }
+  .pipe-step { text-align: center; padding: 0 1.5rem; position: relative; }
+  .pipe-num {
+    width: 50px; height: 50px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem;
+    position: relative; z-index: 1;
+    border: 2px solid var(--blue);
+    background: var(--bg);
+    color: var(--blue-lt);
+  }
+  .pipe-num.p2 { border-color: rgba(58,130,240,0.7); color: rgba(138,180,232,0.9); }
+  .pipe-num.p3 { border-color: var(--accent2); color: var(--accent2); }
+  .pipe-num.p4 { border-color: var(--steel); color: var(--steel); }
+
+  .pipe-title { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.98rem; margin-bottom: 0.75rem; }
+  .pipe-body  { font-size: 0.85rem; color: var(--text-body); line-height: 1.65; }
+  .pipe-tags  { display: flex; flex-wrap: wrap; gap: 0.38rem; justify-content: center; margin-top: 0.9rem; }
+  .pipe-tag {
+    font-family: 'Space Mono', monospace; font-size: 0.56rem; letter-spacing: 0.05em;
+    padding: 0.18rem 0.45rem;
+    border: 1px solid rgba(58,130,240,0.2);
+    border-radius: 2px; color: var(--white-muted); text-transform: uppercase;
+  }
+
+  /* METRICS */
+  #metrics { background: var(--bg); }
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 1.2rem;
+    margin-top: 3.5rem;
+  }
+  .metric-card {
+    padding: 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, background 0.25s;
+  }
+  .metric-card:hover { border-color: var(--border-h); background: var(--bg-card2); }
+  .metric-card::before {
+    content: attr(data-metric);
+    position: absolute;
+    bottom: -16px; right: -6px;
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 4.8rem;
+    color: rgba(58,130,240,0.04);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .metric-val {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 2.7rem; color: var(--blue-lt); line-height: 1; margin-bottom: 0.4rem;
+  }
+  .metric-val.v2 { color: var(--accent2); }
+  .metric-title {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.1em; color: var(--white-muted); text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .metric-desc { font-size: 0.86rem; color: var(--text-body); line-height: 1.65; }
+
+  /* IMPACT */
+  #impact { background: var(--bg-mid); }
+  .impact-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2.5rem; margin-top: 3.5rem; align-items: center;
+  }
+  .impact-list { list-style: none; }
+  .impact-list li {
+    display: flex; align-items: flex-start; gap: 1.1rem;
+    padding: 1.1rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .impact-list li:last-child { border-bottom: none; }
+  .impact-icon {
+    width: 40px; height: 40px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.82rem;
+    background: rgba(58,130,240,0.1); color: var(--blue-lt);
+    border: 1px solid rgba(58,130,240,0.22);
+  }
+  .impact-icon.v2 {
+    background: rgba(79,195,247,0.08); color: var(--accent2);
+    border-color: rgba(79,195,247,0.2);
+  }
+  .impact-text h4 {
+    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.97rem; margin-bottom: 0.2rem;
+  }
+  .impact-text p { font-size: 0.86rem; color: var(--text-body); }
+  .impact-visual { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .impact-big-stat {
+    padding: 1.7rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: center;
+    transition: border-color 0.25s;
+  }
+  .impact-big-stat:hover { border-color: var(--border-h); }
+  .impact-big-num {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 2.1rem; color: var(--blue-lt); line-height: 1; margin-bottom: 0.4rem;
+  }
+  .impact-big-num.v2 { color: var(--accent2); }
+  .impact-big-label {
+    font-family: 'Space Mono', monospace; font-size: 0.62rem;
+    text-transform: uppercase; letter-spacing: 0.07em; color: var(--white-muted); line-height: 1.4;
+  }
+
+  /* LINKS SECTION */
+  #links { background: var(--bg); }
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 1.2rem;
+    margin-top: 3rem;
+  }
+  .link-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.8rem;
+    text-decoration: none;
+    display: block;
+    transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .link-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--blue);
+    transform: scaleX(0); transition: transform 0.3s; transform-origin: left;
+  }
+  .link-card:hover { border-color: var(--border-h); background: var(--bg-card2); transform: translateY(-2px); }
+  .link-card:hover::after { transform: scaleX(1); }
+  .link-icon {
+    width: 40px; height: 40px; border-radius: 4px; margin-bottom: 1.1rem;
+    background: rgba(58,130,240,0.1); border: 1px solid rgba(58,130,240,0.2);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .link-icon svg { width: 20px; height: 20px; fill: var(--blue-lt); }
+  .link-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--white); margin-bottom: 0.5rem;
+  }
+  .link-desc { font-size: 0.84rem; color: var(--text-body); line-height: 1.6; margin-bottom: 0.8rem; }
+  .link-url {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: var(--blue-lt); letter-spacing: 0.05em;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  /* CTA */
+  #cta { background: var(--bg-mid); }
+  .cta-inner {
+    padding: 7rem 4rem;
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .cta-title {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: clamp(2.1rem, 3.8vw, 3.3rem);
+    line-height: 1.1; margin-bottom: 1.4rem; letter-spacing: -0.02em;
+  }
+  .cta-body { font-size: 1.03rem; color: var(--text-body); margin-bottom: 2.4rem; line-height: 1.85; }
+
+  .founder-card {
+    margin-top: 3rem;
+    padding: 1.5rem 2rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(58,130,240,0.04);
+    text-align: left;
+  }
+  .founder-label {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--white-muted);
+    margin-bottom: 0.55rem;
+  }
+  .founder-name {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.15rem;
+    color: var(--white); margin-bottom: 0.25rem;
+  }
+  .founder-role { font-size: 0.86rem; color: var(--text-body); margin-bottom: 0.5rem; }
+  .founder-email {
+    font-family: 'Space Mono', monospace; font-size: 0.74rem;
+    color: var(--blue-lt); text-decoration: none;
+  }
+  .founder-email:hover { color: var(--accent2); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.8rem 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; z-index: 1;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .footer-brand {
+    font-family: 'Space Mono', monospace; font-size: 0.68rem;
+    color: var(--white-muted); letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .footer-right {
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    color: rgba(180,205,240,0.25); text-align: right; line-height: 1.6;
+  }
+  .footer-right a {
+    color: rgba(138,180,232,0.45); text-decoration: none;
+  }
+  .footer-right a:hover { color: var(--blue-lt); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseRing {
+    0%   { box-shadow: 0 0 0 0 rgba(58,130,240,0.3); }
+    70%  { box-shadow: 0 0 0 12px rgba(58,130,240,0); }
+    100% { box-shadow: 0 0 0 0 rgba(58,130,240,0); }
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(58,130,240,0.35); border-radius: 2px; }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 1.5rem; }
+    nav ul { display: none; }
+    .hero-wrap, .section-inner { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .hero-stats { grid-template-columns: 1fr 1fr; }
+    .pipeline { grid-template-columns: 1fr 1fr; }
+    .pipeline::before { display: none; }
+    .outputs-grid { grid-template-columns: 1fr; }
+    .output-card.wide { grid-column: 1; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .impact-grid, .links-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-orb one"></div>
+<div class="glow-orb two"></div>
+
+<nav>
+  <a class="nav-logo" href="#">NERVALYS<span>-AI</span></a>
+  <ul>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#outputs">Outputs</a></li>
+    <li><a href="#how">Technology</a></li>
+    <li><a href="#metrics">Validation</a></li>
+    <li><a href="#impact">Impact</a></li>
+    <li><a href="#links">Links</a></li>
+  </ul>
+  <a class="nav-cta" href="mailto:mariam.elelidy25@gmail.com">Contact</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-wrap">
+    <div class="hero-eyebrow">AI-Powered Stratification in Personalized Medicine</div>
+    <h1 class="hero-title">
+      We Don't Predict<br>
+      <span class="hi">Neuropathy.</span><br>
+      We <span class="h2">Decode</span> It.
+    </h1>
+    <p class="hero-sub">
+      NERVALYS-AI is a computational precision stratification platform that reads the hidden biological structure of diabetic peripheral neuropathy — per patient, per mechanism, per visit.
+    </p>
+    <div class="hero-actions">
+      <a href="https://github.com/mariam-elelidy/NERVALYS-AI" target="_blank" class="btn-primary">GitHub Repository</a>
+      <a href="https://www.linkedin.com/in/mariam-elelidy-25me/" target="_blank" class="btn-ghost">LinkedIn Profile</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="stat-val">0.972</div>
+        <div class="stat-label">External AUROC</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-val">95.6%</div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-val">−60%</div>
+        <div class="stat-label">Trial-and-Error</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-val">130M</div>
+        <div class="stat-label">People Affected</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-inner">
+    <div class="section-tag">App Demo</div>
+    <h2 class="section-title">See the Platform in Action</h2>
+    <p class="section-body">Watch NERVALYS-AI transform raw biomarker and EMG data into a structured, interpretable disease profile — in real time.</p>
+    <div class="video-wrapper">
+      <div class="video-placeholder">
+        <a class="play-btn" href="https://github.com/mariam-elelidy/NERVALYS-AI/blob/main/docs/APP%20Demo.MP4" target="_blank" rel="noopener" title="Watch App Demo">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+        </a>
+        <div class="video-label">NERVALYS-AI · App Demo · Click to Watch</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- OUTPUTS -->
+<section id="outputs">
+  <div class="section-inner">
+    <div class="section-tag">Model Output</div>
+    <h2 class="section-title">Clinical Intelligence, Not Just Predictions</h2>
+    <p class="section-body">Every output derives from a single Personalized Vector — a patient-specific latent representation of how disease behaves biologically.</p>
+
+    <div class="outputs-grid">
+
+      <!-- A -->
+      <div class="output-card t-blue">
+        <div class="card-label"><span class="card-label-dot"></span>A — Personalized Vector (PV)</div>
+        <div class="pv-id">PV ID: PV-7C2F-19A8-4D6B</div>
+        <div class="pv-grid">
+          <div class="pv-metric"><span class="pv-metric-val">48</span><span class="pv-metric-label">Dimensions</span></div>
+          <div class="pv-metric"><span class="pv-metric-val" style="font-size:0.78rem">Asym.</span><span class="pv-metric-label">Distribution</span></div>
+          <div class="pv-metric"><span class="pv-metric-val" style="font-size:0.78rem">High</span><span class="pv-metric-label">Complexity</span></div>
+          <div class="pv-metric"><span class="pv-metric-val">0.89</span><span class="pv-metric-label">Similarity</span></div>
+          <div class="pv-metric"><span class="pv-metric-val" style="font-size:0.78rem">Top 12%</span><span class="pv-metric-label">Uniqueness</span></div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-body);line-height:1.7">This patient's PV encodes high-complexity biological state with asymmetric distribution — indicating multi-mechanism involvement and active disease dynamics.</p>
+      </div>
+
+      <!-- B -->
+      <div class="output-card t-steel">
+        <div class="card-label steel"><span class="card-label-dot"></span>B — Patient Stratification</div>
+        <div class="strat-badge">Profile: [ RP-INF-Hyper ]</div>
+        <p style="font-size:0.76rem;color:var(--white-muted);margin-bottom:1.2rem;font-family:'Space Mono',monospace">Rapid progression · Inflammatory · Hyper mismatch</p>
+        <div class="strat-row">
+          <div class="strat-row-label">Progression Dynamics<span class="strat-vals">RP=0.98 · SP=0.20</span></div>
+          <div class="bar-track"><div class="bar-fill b1" style="width:98%"></div></div>
+        </div>
+        <div class="strat-row">
+          <div class="strat-row-label">Dominant Mechanism — INF<span class="strat-vals">INF=0.81 · MET=0.41</span></div>
+          <div class="bar-track"><div class="bar-fill b2" style="width:81%"></div></div>
+        </div>
+        <div class="strat-row">
+          <div class="strat-row-label">Symptom Alignment — Hyper<span class="strat-vals">Hyper=0.91 · Coupled=0.50</span></div>
+          <div class="bar-track"><div class="bar-fill b3" style="width:91%"></div></div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="output-card t-blue">
+        <div class="card-label"><span class="card-label-dot"></span>C — Management Risk Window</div>
+        <div class="mrw-big">2.3 <span>months</span></div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.68rem;color:var(--steel);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Category: Short</div>
+        <div>
+          <div class="mrw-row"><span class="mrw-row-key">Risk acceleration slope</span><span class="mrw-row-val">+0.18 / month</span></div>
+          <div class="mrw-row"><span class="mrw-row-key">Action threshold crossed</span><span class="mrw-row-val">1.9 months</span></div>
+        </div>
+        <div class="mrw-warning">⚠ If untreated → irreversible motor unit loss probability &gt; 65%</div>
+      </div>
+
+      <!-- D -->
+      <div class="output-card t-accent">
+        <div class="card-label accent2"><span class="card-label-dot"></span>D — Nerve Biological Age</div>
+        <div class="age-display">
+          <div class="age-big">67 <span>yrs</span></div>
+          <div>
+            <div class="age-line">Chronological: 49 yrs</div>
+            <div class="age-delta">+18 yrs delta</div>
+          </div>
+        </div>
+        <div class="age-interp">Accelerated nerve aging confirmed. Biological state corresponds to a patient 18 years older — indicating advanced cumulative oxidative-inflammatory damage beyond clinical symptom severity.</div>
+      </div>
+
+      <!-- F -->
+      <div class="output-card t-blue">
+        <div class="card-label"><span class="card-label-dot"></span>F — Prognosis</div>
+        <div class="prog-risk">
+          <div class="risk-score-val">0.82</div>
+          <div>
+            <div class="risk-badge">High Risk</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--white-muted);text-transform:uppercase;margin-top:.3rem">Trajectory: Worsening · Δ Rate −17%</div>
+          </div>
+        </div>
+        <div class="prog-timeline">
+          <div class="prog-phase"><span class="prog-phase-time">Near-term</span><span class="prog-phase-val">1–6 mo</span></div>
+          <div class="prog-phase"><span class="prog-phase-time">Mid-term</span><span class="prog-phase-val">6–8 mo</span></div>
+          <div class="prog-phase"><span class="prog-phase-time">Recovery</span><span class="prog-phase-val">&gt;18 mo</span></div>
+        </div>
+        <div class="ci-row">Confidence interval: <span class="ci-val">0.74 – 0.89</span></div>
+      </div>
+
+      <!-- G -->
+      <div class="output-card t-steel">
+        <div class="card-label steel"><span class="card-label-dot"></span>G — Pathophysiological Fragmentation Index</div>
+        <div class="pfi-score">0.73</div>
+        <div class="pfi-badge">High Fragmentation</div>
+        <div class="pfi-track-label">Mechanism Burden</div>
+        <div class="bar-track"><div class="bar-fill b1" style="width:82%"></div></div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--steel);text-align:right;margin-top:.3rem">0.82</div>
+        <div class="pfi-track-label">Symptom Signal</div>
+        <div class="bar-track"><div class="bar-fill b2" style="width:40%"></div></div>
+        <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--accent2);text-align:right;margin-top:.3rem">0.40 — Gap: 0.42</div>
+        <div class="pfi-scale" style="margin-top:1rem">
+          <span>Coupled</span>
+          <div class="pfi-scale-bar"><div class="pfi-scale-marker"></div></div>
+          <span>Decoupled</span>
+        </div>
+      </div>
+
+      <!-- E wide -->
+      <div class="output-card wide t-mix">
+        <div class="card-label"><span class="card-label-dot"></span>E — Disease Interaction Translation Map</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+          <div>
+            <div class="path-label" style="margin-bottom:.7rem">Primary Conduit</div>
+            <div class="path-line"><span>Axonal degeneration</span><span class="path-arrow">→</span><span>Global MU loss</span><span class="path-val">0.82</span></div>
+            <div class="path-label" style="margin-top:1rem;margin-bottom:.7rem">Secondary Paths</div>
+            <div class="path-line"><span>Inflammation</span><span class="path-arrow">→</span><span>Distal MU loss</span><span class="path-val">0.93</span></div>
+            <div class="path-line"><span>Compensation</span><span class="path-arrow">→</span><span>Reinnervation</span><span class="path-val">0.88</span></div>
+            <div class="path-label" style="margin-top:1rem;margin-bottom:.7rem;color:var(--steel)">Suppressed Paths</div>
+            <div class="path-line"><span>Inflammation</span><span class="path-cross">✕</span><span>Pain activity</span><span class="path-val-supp">0.91</span></div>
+            <div class="path-line"><span>Metabolic stress</span><span class="path-cross">✕</span><span>Proximal</span><span class="path-val-supp">0.79</span></div>
+          </div>
+          <div>
+            <div class="path-label" style="margin-bottom:.7rem">Peripheral Interaction Matrix</div>
+            <table class="imap-table">
+              <thead>
+                <tr><th></th><th>Distal</th><th>Proximal</th><th>Global</th><th>Reinn.</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Inflammatory</td><td><span class="imap-cell heat-high">0.76</span></td><td><span class="imap-cell heat-low">0.42</span></td><td><span class="imap-cell heat-mid">0.55</span></td><td><span class="imap-cell heat-low">0.31</span></td></tr>
+                <tr><td>Axonal loss</td><td><span class="imap-cell heat-high">0.81</span></td><td><span class="imap-cell heat-mid">0.61</span></td><td><span class="imap-cell heat-high">0.89</span></td><td><span class="imap-cell heat-low">0.28</span></td></tr>
+                <tr><td>Compensatory</td><td><span class="imap-cell heat-low">0.29</span></td><td><span class="imap-cell heat-high">0.71</span></td><td><span class="imap-cell heat-low">0.46</span></td><td><span class="imap-cell heat-high">0.78</span></td></tr>
+                <tr><td>Metabolic</td><td><span class="imap-cell heat-mid">0.64</span></td><td><span class="imap-cell heat-mid">0.58</span></td><td><span class="imap-cell heat-mid">0.69</span></td><td><span class="imap-cell heat-low">0.34</span></td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:1rem;padding:.6rem;background:rgba(58,130,240,0.05);border-radius:3px;border-left:2px solid rgba(58,130,240,0.3)">
+              <div style="font-family:'Space Mono',monospace;font-size:0.6rem;color:var(--white-muted);text-transform:uppercase;margin-bottom:.3rem">System Behavior</div>
+              <div style="font-size:0.78rem;color:var(--text-body)">Nonlinear · Distal-weighted · Compensatory-inefficient</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- HOW -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-tag">Architecture</div>
+    <h2 class="section-title">From Raw Biology to Clinical Intelligence</h2>
+    <p class="section-body">Four engineered stages convert heterogeneous multimodal patient data into a structured, interpretable disease representation.</p>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num">01</div>
+        <div class="pipe-title">Ingest</div>
+        <p class="pipe-body">Inflammatory biomarkers, oxidative stress markers, EMG signals, and clinical metadata are normalized and validated.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag">TNF-α</span><span class="pipe-tag">MDA</span>
+          <span class="pipe-tag">MUNE</span><span class="pipe-tag">MUI</span><span class="pipe-tag">MUAPI</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num p2">02</div>
+        <div class="pipe-title">Encode</div>
+        <p class="pipe-body">Biological signals pass through a denoising Autoencoder. EMG through 1D-CNN + BiLSTM. Each modality encoded separately to preserve causal structure.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag">Autoencoder</span><span class="pipe-tag">1D-CNN</span><span class="pipe-tag">BiLSTM</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num p3">03</div>
+        <div class="pipe-title">Fuse → PV</div>
+        <p class="pipe-body">Cross-modal Transformer attention fuses latents into the Personalized Vector — a structured disease representation unique to each patient.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag">Transformer</span><span class="pipe-tag">cHVAE</span><span class="pipe-tag">PV</span>
+        </div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num p4">04</div>
+        <div class="pipe-title">Interpret</div>
+        <p class="pipe-body">Multi-head outputs deliver stratification axes, prognosis, risk windows, nerve age, and GNN-based mechanism-to-muscle interaction maps.</p>
+        <div class="pipe-tags">
+          <span class="pipe-tag">SHAP</span><span class="pipe-tag">GNN</span><span class="pipe-tag">MLP</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- METRICS -->
+<section id="metrics">
+  <div class="section-inner">
+    <div class="section-tag">External Validation</div>
+    <h2 class="section-title">Performance That Survives the Real World</h2>
+    <p class="section-body">Validated on an independent human cohort of 90 patients — zero retraining. Structure generalizes because the biology generalizes.</p>
+    <div class="metrics-grid">
+      <div class="metric-card" data-metric="0.972">
+        <div class="metric-val">0.972</div>
+        <div class="metric-title">External AUROC</div>
+        <p class="metric-desc">AUROC drop from internal to external: only −0.022. Structural generalization preserved across independent human cohort with zero retraining.</p>
+      </div>
+      <div class="metric-card" data-metric="95.6%">
+        <div class="metric-val">95.6%</div>
+        <div class="metric-title">Accuracy</div>
+        <p class="metric-desc">Macro-F1 of 0.954. Sensitivity 94.8%, specificity 96.7%. Balanced performance across stratification profiles — no class collapse.</p>
+      </div>
+      <div class="metric-card" data-metric="0.91">
+        <div class="metric-val">0.91</div>
+        <div class="metric-title">Stratification Consistency</div>
+        <p class="metric-desc">Patient-level stratification profile stability across repeated inference: 91% consistency. Biological interpretation remains robust.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="section-inner">
+    <div class="section-tag">Clinical & Translational Impact</div>
+    <h2 class="section-title">From Precision Science to Real-World Benefit</h2>
+    <div class="impact-grid">
+      <ul class="impact-list">
+        <li>
+          <div class="impact-icon">↓68%</div>
+          <div class="impact-text">
+            <h4>Diagnostic Uncertainty</h4>
+            <p>Mechanism-aware stratification replaces binary classification — clinicians now see *how* and *why* disease progresses per patient.</p>
+          </div>
+        </li>
+        <li>
+          <div class="impact-icon v2">↑39%</div>
+          <div class="impact-text">
+            <h4>Reclassification Beyond Binary</h4>
+            <p>39% of patients reclassified into actionable stratification profiles — moving beyond symptomatic/asymptomatic into mechanism-matched intervention.</p>
+          </div>
+        </li>
+        <li>
+          <div class="impact-icon">↓48%</div>
+          <div class="impact-text">
+            <h4>Complication Risk Reduction</h4>
+            <p>Earlier, mechanism-matched intervention reduces cumulative nerve damage — the root cause of foot ulceration and amputation.</p>
+          </div>
+        </li>
+        <li>
+          <div class="impact-icon v2">↓45%</div>
+          <div class="impact-text">
+            <h4>Treatment Cost Reduction</h4>
+            <p>Avoiding unnecessary escalation across a 130M-person disease population translates to hundreds of millions in avoided expenditure globally.</p>
+          </div>
+        </li>
+      </ul>
+      <div class="impact-visual">
+        <div class="impact-big-stat">
+          <div class="impact-big-num">↑95–98%</div>
+          <div class="impact-big-label">Patient-level stratification consistency</div>
+        </div>
+        <div class="impact-big-stat">
+          <div class="impact-big-num v2">$50B+</div>
+          <div class="impact-big-label">Global annual DPN healthcare burden</div>
+        </div>
+        <div class="impact-big-stat">
+          <div class="impact-big-num">+39%</div>
+          <div class="impact-big-label">Reclassification gain beyond binary label</div>
+        </div>
+        <div class="impact-big-stat">
+          <div class="impact-big-num v2">1.42</div>
+          <div class="impact-big-label">Cohen's d — model vs. severity gradient</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- LINKS -->
+<section id="links">
+  <div class="section-inner">
+    <div class="section-tag">Resources</div>
+    <h2 class="section-title">Explore the Project</h2>
+    <p class="section-body">Access the full research, source code, and app demonstration below.</p>
+    <div class="links-grid">
+
+      <a class="link-card" href="https://github.com/mariam-elelidy/NERVALYS-AI" target="_blank" rel="noopener">
+        <div class="link-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        </div>
+        <div class="link-title">GitHub Repository</div>
+        <div class="link-desc">Full source code, model architecture, training pipeline, and documentation for the NERVALYS-AI framework.</div>
+        <div class="link-url">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 5l7 7-7 7M3 12h18"/></svg>
+          github.com/mariam-elelidy/NERVALYS-AI
+        </div>
+      </a>
+
+      <a class="link-card" href="https://github.com/mariam-elelidy/NERVALYS-AI/blob/main/docs/Scientific%20Poster.pdf" target="_blank" rel="noopener">
+        <div class="link-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-8-6z"/></svg>
+        </div>
+        <div class="link-title">Scientific Poster</div>
+        <div class="link-desc">Comprehensive visual summary of NERVALYS-AI research, methodology, validation results, and clinical impact.</div>
+        <div class="link-url">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 5l7 7-7 7M3 12h18"/></svg>
+          View PDF
+        </div>
+      </a>
+
+      <a class="link-card" href="mailto:mariam.elelidy25@gmail.com">
+        <div class="link-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        </div>
+        <div class="link-title">Contact & Collaboration</div>
+        <div class="link-desc">Inquiries about clinical pilot partnerships, institutional collaboration, or investment and research access.</div>
+        <div class="link-url">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14 5l7 7-7 7M3 12h18"/></svg>
+          mariam.elelidy25@gmail.com
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="section-tag" style="justify-content:center">Egypt · Precision Medicine · AI for Healthcare</div>
+    <h2 class="cta-title">Decoding Disease.<br><span style="color:var(--blue-lt)">Enabling Precision.</span></h2>
+    <p class="cta-body">NERVALYS-AI is seeking clinical pilot partners, institutional collaborators, and strategic co-investors to bring mechanism-aware DPN stratification into real-world care.</p>
+    <div style="display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap">
+      <a href="mailto:mariam.elelidy25@gmail.com" class="btn-primary">Get in Touch</a>
+      <a href="https://github.com/mariam-elelidy/NERVALYS-AI" target="_blank" class="btn-ghost">GitHub Repository</a>
+    </div>
+    <div class="founder-card">
+      <div class="founder-label">Founder</div>
+      <div class="founder-name">Mariam Mohamed Ahmed Elelidy</div>
+      <div class="founder-role">NERVALYS-AI · Egypt · Precision Medicine</div>
+      <a href="mailto:mariam.elelidy25@gmail.com" class="founder-email">mariam.elelidy25@gmail.com</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">NERVALYS-AI © 2025</div>
+  <div class="footer-right">
+    <a href="https://github.com/mariam-elelidy/NERVALYS-AI" target="_blank">GitHub</a> ·
+    <a href="mailto:mariam.elelidy25@gmail.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+</script>
+</body>
+</html>
