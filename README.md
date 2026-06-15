@@ -6,9 +6,9 @@
 
 ---
 
-### 🔗 Interactive Results Dashboard
+### 🔗 Project Website
 
-[https://mlmodeldash-8yc4suyf.manus.space](https://mlmodeldash-8yc4suyf.manus.space)
+[https://nervalysai-sgavn9eu.manus.space/](https://nervalysai-sgavn9eu.manus.space/)
 
 ---
 
